@@ -5,6 +5,7 @@ mod artist;
 mod assetsmanager;
 mod contextmanager;
 mod decoratedtexture;
+mod engineer;
 mod eventhandler;
 mod gameobject;
 mod npc;
@@ -18,10 +19,11 @@ use artist::Artist;
 use assetsmanager::AssetsManager;
 use contextmanager::ContextManager;
 use decoratedtexture::{DecoratedTexture, TextureMetadata};
+use engineer::SceneEngineer;
 use eventhandler::EventHandler;
 use npc::{NPCCreator, NPC};
 use objectpool::ObjectPool;
-use sdl2::pixels::Color;
+use sdl2::{libc::time_t, pixels::Color};
 use textureidentifier::MyID;
 use windowmanager::WindowManager;
 
@@ -45,15 +47,15 @@ fn main() -> Result<(), String> {
         atlas_size: (128, 96),
     };
     let animation_metadata = AnimationMetadata {
-        fps: 20,
-        total_frame: 11,
+        fps: 10,
+        total_frame: 4,
     };
 
     let texture = assets_manager.load_texture(&MyID::NPC, "assets/King.png", metadata)?;
     let npc_builder = NPCCreator::default()
         .set_animated_texture_from_texture(texture, animation_metadata)
         .set_velocity((0.1, 0.0))
-        .set_position_in_world((440, 360))
+        .set_position_in_world((0, 360))
         .rendered()
         .simulated();
     let _ = object_pool.spawn(npc_builder);
@@ -67,10 +69,16 @@ fn main() -> Result<(), String> {
     window_manager.get_canvas_mut().clear();
     window_manager.get_canvas_mut().present();
     let artist = Artist {};
+    let scene_engineer = SceneEngineer {};
     while running {
         curr_millis = context_manager.timer_subsystem.ticks();
         delta_time = curr_millis - prev_millis;
-        event_handler.update(&mut object_pool, delta_time.into());
+        if delta_time < 16 {
+            continue;
+        }
+
+        event_handler.handle_events(&mut object_pool);
+        scene_engineer.run_simulation(&mut object_pool, delta_time as time_t);
         artist.draw(&object_pool, window_manager.get_canvas_mut());
         prev_millis = curr_millis;
     }

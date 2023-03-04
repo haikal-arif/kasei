@@ -8,7 +8,8 @@ pub struct ObjectPool<Creation: GameObject> {
 }
 impl<Creation: GameObject> ObjectPool<Creation> {
     pub fn new() -> Self {
-        let pool = Vec::with_capacity(50);
+        let mut pool = Vec::new();
+        pool.resize_with(50, || None);
         let full = false;
         Self { pool, full }
     }

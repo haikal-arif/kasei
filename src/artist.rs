@@ -8,6 +8,7 @@ impl Artist {
         object_pool: &ObjectPool<Creation>,
         canvas: &mut Canvas<Window>,
     ) {
+        canvas.clear();
         let actual_pool = object_pool.get_pool();
         for maybe_object in actual_pool {
             if let Some(object) = maybe_object {
@@ -16,5 +17,6 @@ impl Artist {
                 }
             }
         }
+        canvas.present();
     }
 }

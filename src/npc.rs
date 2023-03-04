@@ -87,7 +87,9 @@ impl<'a> GameObject for NPC<'a> {
 
     fn init(&mut self) {}
 
-    fn update(&mut self, delta_time: time_t, event: &Event) {
+    fn handle_event(&mut self, event: &Event) {}
+
+    fn update(&mut self, delta_time: time_t) {
         self.texture.update_frame(delta_time);
         let prev_x = self.position_in_world.x();
         let prev_y = self.position_in_world.y();
@@ -197,16 +199,13 @@ impl<'a> GameObjectCreator for NPCCreator<'a> {
     fn create(self) -> Self::Creation {
         let texture = self.texture.expect("Texture should be initialized");
 
-        let mut position_in_world = Rect::new(
-            0,
-            0,
+        let position_in_world = Rect::new(
+            self.position_in_world.0,
+            self.position_in_world.1,
             texture.get_sprite_size().0 * 4,
             texture.get_sprite_size().1 * 4,
         );
-        position_in_world.center_on(Point::new(
-            self.position_in_world.0,
-            self.position_in_world.1,
-        ));
+
         NPC::new(
             texture,
             position_in_world,

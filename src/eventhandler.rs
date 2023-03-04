@@ -13,21 +13,13 @@ impl EventHandler {
         let event_pump = sdl_context.event_pump()?;
         Ok(Self { event_pump })
     }
-    pub fn update<Creation: GameObject>(
-        &mut self,
-        object_pool: &mut ObjectPool<Creation>,
-        delta_time: time_t,
-    ) {
+    pub fn handle_events<Creation: GameObject>(&mut self, object_pool: &mut ObjectPool<Creation>) {
         for event in self.event_pump.poll_iter() {
-            EventHandler::handle_event(object_pool, delta_time, &event);
+            EventHandler::handle_event(object_pool, &event);
         }
     }
 
-    fn handle_event<Creation: GameObject>(
-        object_pool: &mut ObjectPool<Creation>,
-        delta_time: time_t,
-        event: &Event,
-    ) {
+    fn handle_event<Creation: GameObject>(object_pool: &mut ObjectPool<Creation>, event: &Event) {
         let actual_pool = object_pool.get_pool_mut();
         for idx in 0..actual_pool.len() {
             if let Some(object) = &mut actual_pool[idx] {
@@ -35,7 +27,7 @@ impl EventHandler {
                     actual_pool[idx] = None;
                     continue;
                 }
-                object.update(delta_time, event)
+                object.handle_event(event)
             }
         }
     }
