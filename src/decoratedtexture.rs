@@ -14,8 +14,12 @@ impl<'a> DecoratedTexture<'a> {
     pub fn get_metadata(&self) -> &TextureMetadata {
         &self.metadata
     }
+
+    pub fn get_sprite_size(&self) -> (u32, u32) {
+        self.metadata.sprite_size
+    }
 }
 pub struct TextureMetadata {
-    pub size: (u32, u32),
-    pub frames_per_anim: u32,
+    pub sprite_size: (u32, u32),
+    pub atlas_size: (u32, u32),
 }

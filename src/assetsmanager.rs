@@ -13,9 +13,9 @@ pub struct AssetsManager<'a, Key: TextureID> {
 impl<'a, Key: TextureID> AssetsManager<'a, Key> {
     pub fn new(
         texture_creator: &'a TextureCreator<WindowContext>,
-        map: HashMap<Key, DecoratedTexture<'a>>,
+        texture_map: HashMap<Key, DecoratedTexture<'a>>,
     ) -> Self {
-        let textures = map;
+        let textures = texture_map;
         Self {
             texture_creator,
             textures,
@@ -33,7 +33,7 @@ impl<'a, Key: TextureID> AssetsManager<'a, Key> {
             .insert(texture_id.to_owned(), decorated_texture);
         Ok(self.textures.get(texture_id).unwrap())
     }
-    pub fn get_texture(&self, id: &Key) -> Option<&DecoratedTexture<'a>> {
-        self.textures.get(id)
+    pub fn get_texture(&self, texture_id: &Key) -> Option<&DecoratedTexture> {
+        self.textures.get(texture_id)
     }
 }

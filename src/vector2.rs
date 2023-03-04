@@ -1,12 +1,21 @@
 use std::ops::{Add, Div, Mul, Sub};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct Vector2 {
     x: f32,
     y: f32,
 }
 
 impl Vector2 {
+    pub fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
+    pub fn x(&self) -> f32 {
+        self.x
+    }
+    pub fn y(&self) -> f32 {
+        self.y
+    }
     pub fn set(&mut self, x: f32, y: f32) {
         self.x = x;
         self.y = y;
