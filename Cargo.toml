@@ -8,5 +8,8 @@ edition = "2021"
 [dependencies]
 sdl2 = { version = "0.35.2", features = ["image", "mixer", "ttf", "bundled"] }
 
+[workspace]
+members = ["the_lib", "the_game"]
+
 # [profile.dev.package."*"]
 # opt-level = 3
