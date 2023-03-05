@@ -4,6 +4,7 @@ use crate::objectpool::ObjectPool;
 
 use super::gameobject::GameObject;
 
+// Struct for handling event
 pub struct EventHandler {
     event_pump: EventPump,
 }

@@ -8,6 +8,7 @@ mod decoratedtexture;
 mod engineer;
 mod eventhandler;
 mod gameobject;
+mod keyboardhandler;
 mod npc;
 mod objectpool;
 mod textureidentifier;
@@ -23,9 +24,11 @@ use engineer::SceneEngineer;
 use eventhandler::EventHandler;
 use npc::{NPCCreator, NPC};
 use objectpool::ObjectPool;
-use sdl2::{libc::time_t, pixels::Color};
+use sdl2::{keyboard::Keycode, libc::time_t, pixels::Color};
 use textureidentifier::MyID;
 use windowmanager::WindowManager;
+
+use crate::{gameobject::GameObject, vector2::Vector2};
 
 fn main() -> Result<(), String> {
     let context_manager = ContextManager::new()?;
@@ -58,16 +61,17 @@ fn main() -> Result<(), String> {
     let npc_builder = NPCCreator::default()
         .set_animated_texture_from_texture(texture, animation_metadata.clone())
         .set_velocity((0.2, 0.0))
-        .set_position_in_world((0, 360))
+        .set_position((0, 360))
         .rendered()
         .simulated();
 
     let soldier = NPCCreator::default()
         .set_animated_texture_from_texture(another_texture, animation_metadata)
         .set_velocity((0.1, 0.0))
-        .set_position_in_world((0, 200))
+        .set_position((0, 200))
         .flip_horizontal()
         .rendered()
+        .set_custom_update(my_custom_update)
         .simulated();
     let _ = object_pool.spawn(npc_builder);
     let _ = object_pool.spawn(soldier);
@@ -95,4 +99,44 @@ fn main() -> Result<(), String> {
         prev_millis = curr_millis;
     }
     Ok(())
+}
+
+fn my_custom_update(npc: &mut NPC, delta_time: time_t) {
+    static BASE_VELOCITY: f32 = 0.2;
+    match (
+        npc.keyboard_handler().is_pressed(&Keycode::Up),
+        npc.keyboard_handler().is_pressed(&Keycode::Down),
+    ) {
+        (&true, &false) => npc.set_velocity(Vector2::new(npc.velocity().x(), -BASE_VELOCITY)),
+        (&false, &true) => npc.set_velocity(Vector2::new(npc.velocity().x(), BASE_VELOCITY)),
+        (&true, &true) => npc.set_velocity(Vector2::new(npc.velocity().x(), -npc.velocity().y())),
+        (&false, &false) => npc.set_velocity(Vector2::new(npc.velocity().x(), 0.0)),
+    }
+
+    match (
+        npc.keyboard_handler().is_pressed(&Keycode::Left),
+        npc.keyboard_handler().is_pressed(&Keycode::Right),
+    ) {
+        (&true, &false) => npc.set_velocity(Vector2::new(-BASE_VELOCITY, npc.velocity().y())),
+        (&false, &true) => npc.set_velocity(Vector2::new(BASE_VELOCITY, npc.velocity().y())),
+        (&true, &true) => npc.set_velocity(Vector2::new(-npc.velocity().x(), npc.velocity().y())),
+        (&false, &false) => npc.set_velocity(Vector2::new(0.0, npc.velocity().y())),
+    }
+
+    npc.texture_mut().update_frame(delta_time);
+    let prev_x = npc.position().x();
+    let prev_y = npc.position().y();
+
+    let displacement_x = (delta_time as f32 * npc.velocity().x()) as i32;
+    let displacement_y = (delta_time as f32 * npc.velocity().y()) as i32;
+    npc.set_velocity(Vector2::new(npc.velocity().x(), 0.0));
+    let mut new_x = displacement_x + prev_x;
+    let new_y = displacement_y + prev_y;
+
+    if !npc.is_rendered() {
+        new_x = -128;
+        npc.set_rendered(true);
+    }
+
+    npc.set_position((new_x, new_y));
 }
