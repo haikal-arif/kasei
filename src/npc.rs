@@ -1,3 +1,4 @@
+use sdl2::keyboard::Keycode;
 use sdl2::rect::Point;
 use sdl2::{event::Event, libc::time_t, rect::Rect, render::Canvas};
 
@@ -8,6 +9,7 @@ use crate::vector2::Vector2;
 
 use crate::animatedtexture::{AnimatedTexture, AnimationMetadata};
 use crate::gameobject::GameObject;
+use crate::keyboardhandler::KeyboarHandler;
 
 pub struct NPC<'a> {
     texture: AnimatedTexture<'a>,
@@ -18,6 +20,8 @@ pub struct NPC<'a> {
     simulated: bool,
     inactive: bool,
     velocity: Vector2,
+    custom_update: fn(&mut Self, time_t),
+    keyboard_handler: KeyboarHandler,
 }
 
 impl<'a> NPC<'a> {
@@ -30,7 +34,9 @@ impl<'a> NPC<'a> {
         simulated: bool,
         inactive: bool,
         velocity: Vector2,
+        custom_update: fn(&mut Self, time_t),
     ) -> Self {
+        let keyboard_handler = KeyboarHandler::new();
         NPC {
             texture,
             position_in_world,
@@ -40,6 +46,8 @@ impl<'a> NPC<'a> {
             simulated,
             inactive,
             velocity,
+            custom_update,
+            keyboard_handler,
         }
     }
 
@@ -87,16 +95,47 @@ impl<'a> GameObject for NPC<'a> {
 
     fn init(&mut self) {}
 
-    fn handle_event(&mut self, event: &Event) {}
+    fn handle_event(&mut self, event: &Event) {
+        match event {
+            Event::KeyDown {
+                keycode: Some(key), ..
+            } => self.keyboard_handler.toggle_pressed(key),
+            Event::KeyUp {
+                keycode: Some(key), ..
+            } => self.keyboard_handler.toggle_released(key),
+            _ => {}
+        }
+    }
 
     fn update(&mut self, delta_time: time_t) {
+        match (
+            self.keyboard_handler.is_pressed(&Keycode::Up),
+            self.keyboard_handler.is_pressed(&Keycode::Down),
+        ) {
+            (&true, &false) => self.velocity.set(self.velocity.x(), -0.1),
+            (&false, &true) => self.velocity.set(self.velocity.x(), 0.1),
+            (&true, &true) => self.velocity.set(self.velocity.x(), -self.velocity.y()),
+            (&false, &false) => self.velocity.set(self.velocity.x(), 0.0),
+        }
+
+        match (
+            self.keyboard_handler.is_pressed(&Keycode::Left),
+            self.keyboard_handler.is_pressed(&Keycode::Right),
+        ) {
+            (&true, &false) => self.velocity.set(-0.1, self.velocity.y()),
+            (&false, &true) => self.velocity.set(0.1, self.velocity.y()),
+            (&true, &true) => self.velocity.set(-self.velocity.x(), self.velocity.y()),
+            (&false, &false) => self.velocity.set(0.0, self.velocity.y()),
+        }
+
+        (self.custom_update)(self, delta_time);
         self.texture.update_frame(delta_time);
         let prev_x = self.position_in_world.x();
         let prev_y = self.position_in_world.y();
 
-        let displacement_x = (delta_time as f32 * self.velocity.x() + 0.5) as i32;
-        let displacement_y = (delta_time as f32 * self.velocity.y() + 0.5) as i32;
-
+        let displacement_x = (delta_time as f32 * self.velocity.x()) as i32;
+        let displacement_y = (delta_time as f32 * self.velocity.y()) as i32;
+        self.velocity.set(self.velocity.x(), 0.0);
         let mut new_x = displacement_x + prev_x;
         let new_y = displacement_y + prev_y;
 
@@ -140,6 +179,7 @@ pub struct NPCCreator<'a> {
     rendered: bool,
     simulated: bool,
     velocity: Vector2,
+    custom_update: Option<fn(&mut NPC, time_t)>,
 }
 
 impl<'a> NPCCreator<'a> {
@@ -195,10 +235,15 @@ impl<'a> NPCCreator<'a> {
         self.velocity = Vector2::new(velocity.0, velocity.1);
         self
     }
+
+    pub fn set_custom_update(mut self, custom_func: fn(&mut NPC, time_t)) {
+        self.custom_update = Some(custom_func);
+    }
 }
 
 impl<'a> GameObjectCreator for NPCCreator<'a> {
     type Creation = NPC<'a>;
+
     fn create(self) -> Self::Creation {
         let texture = self.texture.expect("Texture should be initialized");
 
@@ -208,6 +253,10 @@ impl<'a> GameObjectCreator for NPCCreator<'a> {
             texture.get_sprite_size().0 * 4,
             texture.get_sprite_size().1 * 4,
         );
+        let custom_update = match self.custom_update {
+            Some(func) => func,
+            None => |_: &mut NPC, _| {},
+        };
 
         NPC::new(
             texture,
@@ -218,6 +267,7 @@ impl<'a> GameObjectCreator for NPCCreator<'a> {
             self.simulated,
             false,
             self.velocity,
+            custom_update,
         )
     }
 }

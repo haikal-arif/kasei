@@ -8,6 +8,7 @@ mod decoratedtexture;
 mod engineer;
 mod eventhandler;
 mod gameobject;
+mod keyboardhandler;
 mod npc;
 mod objectpool;
 mod textureidentifier;
