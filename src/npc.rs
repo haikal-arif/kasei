@@ -13,7 +13,7 @@ use crate::keyboardhandler::KeyboarHandler;
 
 pub struct NPC<'a> {
     texture: AnimatedTexture<'a>,
-    position_in_world: sdl2::rect::Rect,
+    position: sdl2::rect::Rect,
     horizontal_flipped: bool,
     vertical_flipped: bool,
     rendered: bool,
@@ -27,7 +27,7 @@ pub struct NPC<'a> {
 impl<'a> NPC<'a> {
     pub fn new(
         texture: AnimatedTexture<'a>,
-        position_in_world: sdl2::rect::Rect,
+        position: sdl2::rect::Rect,
         horizontal_flipped: bool,
         vertical_flipped: bool,
         rendered: bool,
@@ -39,7 +39,7 @@ impl<'a> NPC<'a> {
         let keyboard_handler = KeyboarHandler::new();
         NPC {
             texture,
-            position_in_world,
+            position,
             horizontal_flipped,
             vertical_flipped,
             rendered,
@@ -52,16 +52,16 @@ impl<'a> NPC<'a> {
     }
 
     pub fn set_position(&mut self, new_coords: (i32, i32)) {
-        self.position_in_world.set_x(new_coords.0);
-        self.position_in_world.set_y(new_coords.1);
+        self.position.set_x(new_coords.0);
+        self.position.set_y(new_coords.1);
     }
 
     pub fn set_position_x(&mut self, new_x_coord: i32) {
-        self.position_in_world.set_x(new_x_coord);
+        self.position.set_x(new_x_coord);
     }
 
     pub fn set_position_y(&mut self, new_y_coord: i32) {
-        self.position_in_world.set_x(new_y_coord);
+        self.position.set_x(new_y_coord);
     }
 
     pub fn set_hflip(&mut self, val: bool) -> &Self {
@@ -73,12 +73,27 @@ impl<'a> NPC<'a> {
         self.vertical_flipped = val;
     }
 
-    pub fn get_position(&self) -> Rect {
-        self.position_in_world
+    pub fn position(&self) -> Rect {
+        self.position
     }
 
     pub fn set_rendered(&mut self, is_rendered: bool) {
         self.rendered = is_rendered;
+    }
+    pub fn keyboard_handler(&self) -> &KeyboarHandler {
+        &self.keyboard_handler
+    }
+    pub fn velocity(&self) -> &Vector2 {
+        &self.velocity
+    }
+    pub fn set_velocity(&mut self, new_velocity: Vector2) {
+        self.velocity = new_velocity;
+    }
+    pub fn texture(&self) -> &AnimatedTexture<'a> {
+        &self.texture
+    }
+    pub fn texture_mut(&mut self) -> &mut AnimatedTexture<'a> {
+        &mut self.texture
     }
 }
 
@@ -108,60 +123,19 @@ impl<'a> GameObject for NPC<'a> {
     }
 
     fn update(&mut self, delta_time: time_t) {
-        match (
-            self.keyboard_handler.is_pressed(&Keycode::Up),
-            self.keyboard_handler.is_pressed(&Keycode::Down),
-        ) {
-            (&true, &false) => self.velocity.set(self.velocity.x(), -0.1),
-            (&false, &true) => self.velocity.set(self.velocity.x(), 0.1),
-            (&true, &true) => self.velocity.set(self.velocity.x(), -self.velocity.y()),
-            (&false, &false) => self.velocity.set(self.velocity.x(), 0.0),
-        }
-
-        match (
-            self.keyboard_handler.is_pressed(&Keycode::Left),
-            self.keyboard_handler.is_pressed(&Keycode::Right),
-        ) {
-            (&true, &false) => self.velocity.set(-0.1, self.velocity.y()),
-            (&false, &true) => self.velocity.set(0.1, self.velocity.y()),
-            (&true, &true) => self.velocity.set(-self.velocity.x(), self.velocity.y()),
-            (&false, &false) => self.velocity.set(0.0, self.velocity.y()),
-        }
-
         (self.custom_update)(self, delta_time);
-        self.texture.update_frame(delta_time);
-        let prev_x = self.position_in_world.x();
-        let prev_y = self.position_in_world.y();
-
-        let displacement_x = (delta_time as f32 * self.velocity.x()) as i32;
-        let displacement_y = (delta_time as f32 * self.velocity.y()) as i32;
-        self.velocity.set(self.velocity.x(), 0.0);
-        let mut new_x = displacement_x + prev_x;
-        let new_y = displacement_y + prev_y;
-
-        if !self.rendered {
-            new_x = -128;
-            self.rendered = true;
-        }
-
-        self.position_in_world.set_x(new_x);
-        self.position_in_world.set_y(new_y);
-
-        println!("Previous {:?}", prev_x);
-        println!("Displacement {:?}", displacement_x);
-        println!("Position {:?}", new_x);
     }
 
     fn draw(&mut self, canvas: &mut Canvas<sdl2::video::Window>) {
         let canvas_size = canvas.output_size().unwrap();
-        let dst = self.position_in_world;
+        let dst = self.position;
         if dst.x() > (canvas_size.0 - self.texture.get_sprite_size().0) as i32 {
             self.rendered = false;
         }
         let _ = canvas.copy_ex(
             self.texture.get_spritesheet(),
             self.texture.get_frame(),
-            self.get_position(),
+            self.position(),
             0.0,
             None,
             self.horizontal_flipped,
@@ -173,7 +147,7 @@ impl<'a> GameObject for NPC<'a> {
 #[derive(Default)]
 pub struct NPCCreator<'a> {
     texture: Option<AnimatedTexture<'a>>,
-    position_in_world: (i32, i32),
+    position: (i32, i32),
     horizontal_flipped: bool,
     vertical_flipped: bool,
     rendered: bool,
@@ -226,8 +200,8 @@ impl<'a> NPCCreator<'a> {
         self.simulated = true;
         self
     }
-    pub fn set_position_in_world(mut self, coords: (i32, i32)) -> Self {
-        self.position_in_world = coords;
+    pub fn set_position(mut self, coords: (i32, i32)) -> Self {
+        self.position = coords;
         self
     }
 
@@ -236,8 +210,9 @@ impl<'a> NPCCreator<'a> {
         self
     }
 
-    pub fn set_custom_update(mut self, custom_func: fn(&mut NPC, time_t)) {
+    pub fn set_custom_update(mut self, custom_func: fn(&mut NPC, time_t)) -> Self {
         self.custom_update = Some(custom_func);
+        self
     }
 }
 
@@ -247,9 +222,9 @@ impl<'a> GameObjectCreator for NPCCreator<'a> {
     fn create(self) -> Self::Creation {
         let texture = self.texture.expect("Texture should be initialized");
 
-        let position_in_world = Rect::new(
-            self.position_in_world.0,
-            self.position_in_world.1,
+        let position = Rect::new(
+            self.position.0,
+            self.position.1,
             texture.get_sprite_size().0 * 4,
             texture.get_sprite_size().1 * 4,
         );
@@ -260,7 +235,7 @@ impl<'a> GameObjectCreator for NPCCreator<'a> {
 
         NPC::new(
             texture,
-            position_in_world,
+            position,
             self.horizontal_flipped,
             self.vertical_flipped,
             self.rendered,
