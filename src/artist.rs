@@ -9,7 +9,7 @@ impl Artist {
         canvas: &mut Canvas<Window>,
     ) {
         canvas.clear();
-        let actual_pool = object_pool.get_pool_mut();
+        let actual_pool = object_pool.pool_mut();
         for maybe_object in actual_pool {
             if let Some(object) = maybe_object {
                 if object.is_rendered() {

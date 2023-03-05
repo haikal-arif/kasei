@@ -1,5 +1,3 @@
-use sdl2::keyboard::Keycode;
-use sdl2::rect::Point;
 use sdl2::{event::Event, libc::time_t, rect::Rect, render::Canvas};
 
 use crate::assetsmanager::{AssetsManager, TextureID};
@@ -129,12 +127,12 @@ impl<'a> GameObject for NPC<'a> {
     fn draw(&mut self, canvas: &mut Canvas<sdl2::video::Window>) {
         let canvas_size = canvas.output_size().unwrap();
         let dst = self.position;
-        if dst.x() > (canvas_size.0 - self.texture.get_sprite_size().0) as i32 {
+        if dst.x() > (canvas_size.0 - self.texture.sprite_size().0) as i32 {
             self.rendered = false;
         }
         let _ = canvas.copy_ex(
-            self.texture.get_spritesheet(),
-            self.texture.get_frame(),
+            self.texture.spritesheet(),
+            self.texture.current_frame(),
             self.position(),
             0.0,
             None,
@@ -225,8 +223,8 @@ impl<'a> GameObjectCreator for NPCCreator<'a> {
         let position = Rect::new(
             self.position.0,
             self.position.1,
-            texture.get_sprite_size().0 * 4,
-            texture.get_sprite_size().1 * 4,
+            texture.sprite_size().0 * 4,
+            texture.sprite_size().1 * 4,
         );
         let custom_update = match self.custom_update {
             Some(func) => func,

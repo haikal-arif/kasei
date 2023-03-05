@@ -14,7 +14,10 @@ impl EventHandler {
         let event_pump = sdl_context.event_pump()?;
         Ok(Self { event_pump })
     }
-    pub fn handle_events<Creation: GameObject>(&mut self, object_pool: &mut ObjectPool<Creation>) -> bool {
+    pub fn handle_events<Creation: GameObject>(
+        &mut self,
+        object_pool: &mut ObjectPool<Creation>,
+    ) -> bool {
         let mut running = true;
         for event in self.event_pump.poll_iter() {
             match event {
@@ -33,7 +36,7 @@ impl EventHandler {
     }
 
     fn handle_event<Creation: GameObject>(object_pool: &mut ObjectPool<Creation>, event: &Event) {
-        let actual_pool = object_pool.get_pool_mut();
+        let actual_pool = object_pool.pool_mut();
         for idx in 0..actual_pool.len() {
             if let Some(object) = &mut actual_pool[idx] {
                 if object.is_inactive() {
