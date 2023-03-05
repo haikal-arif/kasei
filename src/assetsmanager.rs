@@ -26,12 +26,12 @@ impl<'a, Key: TextureID> AssetsManager<'a, Key> {
         texture_id: &Key,
         file_path: &str,
         metadata: TextureMetadata,
-    ) -> Result<&DecoratedTexture, String> {
+    ) -> Result<(), String> {
         let texture = self.texture_creator.load_texture(file_path)?;
         let decorated_texture = DecoratedTexture::new(texture, metadata);
         self.textures
             .insert(texture_id.to_owned(), decorated_texture);
-        Ok(self.textures.get(texture_id).unwrap())
+        Ok(())
     }
     pub fn get_texture(&self, texture_id: &Key) -> Option<&DecoratedTexture> {
         self.textures.get(texture_id)

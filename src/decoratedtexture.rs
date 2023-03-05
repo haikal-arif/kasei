@@ -19,6 +19,7 @@ impl<'a> DecoratedTexture<'a> {
         self.metadata.sprite_size
     }
 }
+#[derive(Debug, Clone)]
 pub struct TextureMetadata {
     pub sprite_size: (u32, u32),
     pub atlas_size: (u32, u32),

@@ -100,11 +100,9 @@ impl<'a> GameObject for NPC<'a> {
         let mut new_x = displacement_x + prev_x;
         let new_y = displacement_y + prev_y;
 
-        if new_x > 768 {
-            new_x = -128
-        }
-        if new_x < -128 {
-            new_x = 672
+        if !self.rendered {
+            new_x = -128;
+            self.rendered = true;
         }
 
         self.position_in_world.set_x(new_x);
@@ -115,7 +113,12 @@ impl<'a> GameObject for NPC<'a> {
         println!("Position {:?}", new_x);
     }
 
-    fn draw(&self, canvas: &mut Canvas<sdl2::video::Window>) {
+    fn draw(&mut self, canvas: &mut Canvas<sdl2::video::Window>) {
+        let canvas_size = canvas.output_size().unwrap();
+        let dst = self.position_in_world;
+        if dst.x() > (canvas_size.0 - self.texture.get_sprite_size().0) as i32 {
+            self.rendered = false;
+        }
         let _ = canvas.copy_ex(
             self.texture.get_spritesheet(),
             self.texture.get_frame(),

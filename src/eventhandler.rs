@@ -1,4 +1,4 @@
-use sdl2::{event::Event, libc::time_t, EventPump, Sdl};
+use sdl2::{event::Event, keyboard::Keycode, EventPump, Sdl};
 
 use crate::objectpool::ObjectPool;
 
@@ -13,10 +13,22 @@ impl EventHandler {
         let event_pump = sdl_context.event_pump()?;
         Ok(Self { event_pump })
     }
-    pub fn handle_events<Creation: GameObject>(&mut self, object_pool: &mut ObjectPool<Creation>) {
+    pub fn handle_events<Creation: GameObject>(&mut self, object_pool: &mut ObjectPool<Creation>) -> bool {
+        let mut running = true;
         for event in self.event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => {
+                    running = false;
+                }
+                _ => {}
+            }
             EventHandler::handle_event(object_pool, &event);
         }
+        running
     }
 
     fn handle_event<Creation: GameObject>(object_pool: &mut ObjectPool<Creation>, event: &Event) {

@@ -5,11 +5,11 @@ pub struct Artist {}
 impl Artist {
     pub fn draw<Creation: GameObject>(
         &self,
-        object_pool: &ObjectPool<Creation>,
+        object_pool: &mut ObjectPool<Creation>,
         canvas: &mut Canvas<Window>,
     ) {
         canvas.clear();
-        let actual_pool = object_pool.get_pool();
+        let actual_pool = object_pool.get_pool_mut();
         for maybe_object in actual_pool {
             if let Some(object) = maybe_object {
                 if object.is_rendered() {

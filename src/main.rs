@@ -50,17 +50,29 @@ fn main() -> Result<(), String> {
         fps: 10,
         total_frame: 4,
     };
+    assets_manager.load_texture(&MyID::NPC(0), "assets/King.png", metadata.clone())?;
+    assets_manager.load_texture(&MyID::NPC(1), "assets/Soldier.png", metadata)?;
 
-    let texture = assets_manager.load_texture(&MyID::NPC, "assets/King.png", metadata)?;
+    let texture = assets_manager.get_texture(&MyID::NPC(0)).unwrap();
+    let another_texture = assets_manager.get_texture(&MyID::NPC(1)).unwrap();
     let npc_builder = NPCCreator::default()
-        .set_animated_texture_from_texture(texture, animation_metadata)
-        .set_velocity((0.1, 0.0))
+        .set_animated_texture_from_texture(texture, animation_metadata.clone())
+        .set_velocity((0.2, 0.0))
         .set_position_in_world((0, 360))
         .rendered()
         .simulated();
+
+    let soldier = NPCCreator::default()
+        .set_animated_texture_from_texture(another_texture, animation_metadata)
+        .set_velocity((0.1, 0.0))
+        .set_position_in_world((0, 200))
+        .flip_horizontal()
+        .rendered()
+        .simulated();
     let _ = object_pool.spawn(npc_builder);
+    let _ = object_pool.spawn(soldier);
     let mut event_handler = EventHandler::new(&context_manager.sdl_context)?;
-    let running = true;
+    let mut running = true;
     let mut curr_millis;
     let mut delta_time;
     window_manager
@@ -77,9 +89,9 @@ fn main() -> Result<(), String> {
             continue;
         }
 
-        event_handler.handle_events(&mut object_pool);
+        running = event_handler.handle_events(&mut object_pool);
         scene_engineer.run_simulation(&mut object_pool, delta_time as time_t);
-        artist.draw(&object_pool, window_manager.get_canvas_mut());
+        artist.draw(&mut object_pool, window_manager.get_canvas_mut());
         prev_millis = curr_millis;
     }
     Ok(())

@@ -47,6 +47,7 @@ impl<'a> AnimatedTexture<'a> {
         self.currentframe
     }
 }
+#[derive(Debug, Clone)]
 pub struct AnimationMetadata {
     pub fps: u32,
     pub total_frame: u32,
