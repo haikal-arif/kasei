@@ -30,11 +30,11 @@ impl<Creation: GameObject> ObjectPool<Creation> {
         self.full = true;
         Err("Pool is full".to_string())
     }
-    pub fn get_pool_mut(&mut self) -> &mut Vec<Option<Creation>> {
+    pub fn pool_mut(&mut self) -> &mut Vec<Option<Creation>> {
         &mut self.pool
     }
 
-    pub fn get_pool(&self) -> &Vec<Option<Creation>> {
+    pub fn pool(&self) -> &Vec<Option<Creation>> {
         &self.pool
     }
 }

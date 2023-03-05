@@ -8,14 +8,14 @@ impl<'a> DecoratedTexture<'a> {
     pub fn new(texture: Texture<'a>, metadata: TextureMetadata) -> Self {
         Self { texture, metadata }
     }
-    pub fn get_texture(&self) -> &Texture<'a> {
+    pub fn texture(&self) -> &Texture<'a> {
         &self.texture
     }
-    pub fn get_metadata(&self) -> &TextureMetadata {
+    pub fn metadata(&self) -> &TextureMetadata {
         &self.metadata
     }
 
-    pub fn get_sprite_size(&self) -> (u32, u32) {
+    pub fn sprite_size(&self) -> (u32, u32) {
         self.metadata.sprite_size
     }
 }
